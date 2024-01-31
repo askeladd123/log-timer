@@ -1,7 +1,8 @@
 // TODO: support white space separated values
+// TODO: support shell completions with clap_generate
 
 #![allow(unused)]
-use chrono::{DateTime, Local};
+use chrono::{DateTime, Datelike, Local, NaiveTime, TimeZone};
 use clap::builder::styling::AnsiColor;
 use clap::{Arg, ArgAction, Command, Parser, Subcommand};
 use colored::*;
@@ -10,25 +11,36 @@ use std::error::Error;
 use std::fmt::Display;
 use std::fs::File;
 use std::io::Write;
+use std::ops::Not;
 use std::path::{Path, PathBuf};
 use std::process::exit;
 use std::{default, fs};
 
 #[derive(Parser)]
-#[command(author, version, about, long_about = None)]
+#[command(
+    about = "A tool that helps you track time when you work (or play).",
+    long_about = "This tool helps you keep track of time. Example usage: \n- `log-timer start washing-dishes`\n- `log-timer stop` when you're done.\nThe program will add an entry with the time you washed dishes to a log file. See `log-timer configure --help` for initial setup of the log file."
+)]
 struct Cli {
     #[command(subcommand)]
     command: Option<Commands>,
 }
 
+// TODO: implement time wrapper struct, to automatically convert time formats
+struct Time {}
+
 #[derive(Subcommand)]
 enum Commands {
     Start {
+        #[arg(help = "Label describing the activity started.")]
         label: Option<String>,
-        time: Option<DateTime<Local>>,
+
+        #[arg(short, long, value_name = "H24:M", help = "Alternative start time.")]
+        time: Option<String>,
     },
     Stop {
-        time: Option<DateTime<Local>>,
+        #[arg(short, long, value_name = "H24:M", help = "Alternative stop time.")]
+        time: Option<String>,
     },
     Abort,
     Configure {
@@ -38,6 +50,7 @@ enum Commands {
         #[arg(short, long, default_value_t=RowFormatter::New)]
         row_formatter: RowFormatter,
     },
+    GetConfig,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -135,17 +148,28 @@ struct Config {
     row_formatter: RowFormatter,
 }
 
+enum ConfigError {
+    ConfigNotFound,
+    LogFileNotFound { path_tried: PathBuf },
+}
+
 impl Config {
-    fn load_checked(file: &Path) -> Result<Self, Box<dyn Error>> {
-        let data = fs::read_to_string(file)?;
+    fn load_checked(file: &Path) -> Result<Self, ConfigError> {
+        let data = if let Ok(v) = fs::read_to_string(file) {
+            v
+        } else {
+            return Err(ConfigError::ConfigNotFound);
+        };
 
-        let my_struct: Self = serde_json::from_str(&data)?;
+        let config: Self = serde_json::from_str(&data).unwrap();
 
-        if !my_struct.log_file_path.exists() {
-            return Err("Configured log file does not exist.".into());
+        if config.log_file_path.exists() {
+            Ok(config)
+        } else {
+            Err(ConfigError::LogFileNotFound {
+                path_tried: config.log_file_path,
+            })
         }
-
-        Ok(my_struct)
     }
 
     fn save(&self, path: &Path) {
@@ -164,6 +188,16 @@ fn append_to_file(filename: &PathBuf, content: &str) -> std::io::Result<()> {
 
     writeln!(file, "{}", content)?;
     Ok(())
+}
+
+fn parse_time_to_today(time_str: &str) -> Result<DateTime<Local>, chrono::format::ParseError> {
+    let time = NaiveTime::parse_from_str(time_str, "%H:%M")?;
+    let datetime = Local::now()
+        .date_naive()
+        .and_time(time)
+        .and_local_timezone(Local::now().timezone())
+        .unwrap();
+    Ok(datetime)
 }
 
 fn main() {
@@ -204,11 +238,16 @@ fn main() {
         exit(0);
     }
 
-    let config = if let Ok(v) = Config::load_checked(&config_file_path) {
-        v
-    } else {
-        eprintln!("{warning}: Program not configured yet. Some fields are required, use the `--help` flag for more info.");
-        exit(0);
+    let config = match Config::load_checked(&config_file_path) {
+        Ok(v) => v,
+        Err(ConfigError::ConfigNotFound) => {
+            eprintln!("{warning}: Program not configured yet. Some fields are required, use the `--help` flag for more info.");
+            exit(0);
+        }
+        Err(ConfigError::LogFileNotFound { path_tried }) => {
+            eprintln!("{warning}: Configuration required, log file not found at {path_tried:?}.");
+            exit(-1);
+        }
     };
 
     let tmp_file_name = Path::new("tmp.json");
@@ -266,6 +305,7 @@ fn main() {
                     "{warning}: There is already an activity being timed. Won't start another one."
                 )
             }
+            (.., Commands::GetConfig) => todo!(),
             (.., Commands::Configure { .. }) => unreachable!(),
         }
     } else if tmp_file_path.exists() {
