@@ -113,7 +113,7 @@ impl From<String> for RowFormatter {
         match value.to_lowercase().as_str() {
             "old" => Self::Old,
             "new" => Self::New,
-            _ => panic!("Could not convert {value} to RowFormatter. "),
+            _ => panic!("Could not convert `{value}` to RowFormatter. "),
         }
     }
 }
@@ -265,7 +265,7 @@ fn main() {
                 }
                 .save(&tmp_file_path);
                 match label {
-                    Some(v) => println!("Activity started {v}."),
+                    Some(v) => println!("Activity started `{v}`."),
                     None => println!("Activity started."),
                 }
             }
@@ -282,7 +282,7 @@ fn main() {
                 append_to_file(&config.log_file_path, &row.to_string());
                 fs::remove_file(tmp_file_path).unwrap();
                 match activity.label {
-                    Some(v) => println!("Stopped activity {v}."),
+                    Some(v) => println!("Stopped activity {v}. Logged `{row}`."),
                     None => println!("Stopped activity."),
                 }
             }
@@ -290,7 +290,7 @@ fn main() {
             (Some(activity), Commands::Abort) => {
                 fs::remove_file(tmp_file_path).unwrap();
                 match activity.label {
-                    Some(v) => println!("Aborted activity {v}."),
+                    Some(v) => println!("Aborted activity `{v}`."),
                     None => println!("Aborted activity."),
                 }
             }
@@ -310,7 +310,10 @@ fn main() {
         }
     } else if tmp_file_path.exists() {
         let activity = Activity::load(&tmp_file_path).unwrap();
-        println!("Currentliy timing activity {activity:?}.");
+        match activity.label {
+            Some(v) => println!("Currentliy timing activity `{v}`."),
+            None => println!("Currently timing activity."),
+        }
     } else {
         println!("No activity is beeing timed.");
     }
