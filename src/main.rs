@@ -190,7 +190,7 @@ fn append_to_file(filename: &PathBuf, content: &str) -> std::io::Result<()> {
     Ok(())
 }
 
-fn parse_time_to_today(time_str: &str) -> Result<DateTime<Local>, chrono::format::ParseError> {
+fn parse_time(time_str: &str) -> Result<DateTime<Local>, chrono::format::ParseError> {
     let time = NaiveTime::parse_from_str(time_str, "%H:%M")?;
     let datetime = Local::now()
         .date_naive()
@@ -265,7 +265,7 @@ fn main() {
                 }
                 .save(&tmp_file_path);
                 match label {
-                    Some(v) => println!("Activity started `{v}`."),
+                    Some(l) => println!("Activity started `{l}`."),
                     None => println!("Activity started."),
                 }
             }
@@ -275,7 +275,24 @@ fn main() {
                     label,
                     time: Some(v),
                 },
-            ) => todo!(),
+            ) => {
+                let time = match parse_time(&v) {
+                    Ok(t) => t,
+                    Err(e) => {
+                        eprintln!("{warning}: Could not parse time input `{v}`. Reason: {e}.");
+                        exit(-1);
+                    }
+                };
+                Activity {
+                    time_started: time,
+                    label: label.clone(),
+                }
+                .save(&tmp_file_path);
+                match label {
+                    Some(l) => println!("Activity started `{l}` at time {}.", time.format("%H:%M")),
+                    None => println!("Activity started at time {}.", time.format("%H:%M")),
+                }
+            }
             (Some(activity), Commands::Stop { time: None }) => {
                 let now = Local::now();
                 let row = config.row_formatter.format(&activity);
