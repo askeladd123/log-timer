@@ -171,12 +171,16 @@ fn main() {
 
     let cli = Cli::parse();
 
+    let conf_dir = dirs::config_dir().unwrap().join("log-timer");
+    if !conf_dir.exists() {
+        fs::create_dir(&conf_dir).unwrap();
+    }
     let data_dir = dirs::data_dir().unwrap().join("log-timer");
     if !data_dir.exists() {
         fs::create_dir(&data_dir).unwrap();
     }
     let config_file_name = Path::new("config.json");
-    let config_file_path = data_dir.join(config_file_name);
+    let config_file_path = conf_dir.join(config_file_name);
 
     if let Some(Commands::Configure {
         ref log_file_path,
