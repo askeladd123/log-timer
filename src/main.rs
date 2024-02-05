@@ -31,6 +31,7 @@ struct Time {}
 
 #[derive(Subcommand)]
 enum Commands {
+    #[command(about = "Begin timing an activity now.")]
     Start {
         #[arg(help = "Label describing the activity started.")]
         label: Option<String>,
@@ -38,11 +39,17 @@ enum Commands {
         #[arg(short, long, value_name = "H24:M", help = "Alternative start time.")]
         time: Option<String>,
     },
+
+    #[command(about = "Stop timing an activty, and write it to a log file. ")]
     Stop {
         #[arg(short, long, value_name = "H24:M", help = "Alternative stop time.")]
         time: Option<String>,
     },
+
+    #[command(about = "Stop timing an activity, and forget about it.")]
     Abort,
+
+    #[command(about = "Use this command to for example decide where to log activities.")]
     Configure {
         #[arg(short, long)]
         log_file_path: PathBuf,
@@ -50,6 +57,10 @@ enum Commands {
         #[arg(short, long, default_value_t=RowFormatter::New)]
         row_formatter: RowFormatter,
     },
+
+    #[command(
+        about = "A quick way to see how the program is configured. This is from a file stored somewhere on your machine."
+    )]
     GetConfig,
 }
 
