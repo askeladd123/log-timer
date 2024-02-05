@@ -118,10 +118,14 @@ impl From<String> for RowFormatter {
     }
 }
 
+enum RowFormatError {
+    NegativeTime,
+    TimeTooLarge,
+}
+
 impl RowFormatter {
-    fn format(&self, activity: &Activity) -> impl Display {
-        let now = Local::now();
-        let time_passed = now.signed_duration_since(activity.time_started);
+    fn format(&self, activity: &Activity, time: DateTime<Local>) -> impl Display {
+        let time_passed = time.signed_duration_since(activity.time_started);
         let hours_passed = time_passed.num_hours();
         let minutes_passed = time_passed.num_minutes() % 60;
         let label = activity.label.clone().unwrap_or("-".into());
@@ -129,13 +133,13 @@ impl RowFormatter {
         match self {
             Self::New => {
                 let start = activity.time_started.format("%Y-%m-%d-%H-%M");
-                let finish = now.format("%Y-%m-%d-%H-%M");
+                let finish = time.format("%Y-%m-%d-%H-%M");
                 format!("{start},{finish},{hours_passed:02}:{minutes_passed:02},{label}")
             }
             Self::Old => {
                 let date = activity.time_started.format("%Y-%m-%d");
                 let start = activity.time_started.format("%H:%M");
-                let finish = now.format("%H:%M");
+                let finish = time.format("%H:%M");
                 format!("{date},{start},{finish},{hours_passed:02}:{minutes_passed:02},{label}")
             }
         }
@@ -294,8 +298,7 @@ fn main() {
                 }
             }
             (Some(activity), Commands::Stop { time: None }) => {
-                let now = Local::now();
-                let row = config.row_formatter.format(&activity);
+                let row = config.row_formatter.format(&activity, Local::now());
                 append_to_file(&config.log_file_path, &row.to_string());
                 fs::remove_file(tmp_file_path).unwrap();
                 match activity.label {
@@ -303,7 +306,37 @@ fn main() {
                     None => println!("Stopped activity."),
                 }
             }
-            (Some(activity), Commands::Stop { time: Some(v) }) => todo!(),
+            (Some(activity), Commands::Stop { time: Some(v) }) => {
+                let time = match parse_time(&v) {
+                    Ok(t) => t,
+                    Err(e) => {
+                        eprintln!("{warning}: Could not parse time input `{v}`. Reason: {e}.");
+                        exit(-1);
+                    }
+                };
+
+                let row = config.row_formatter.format(&activity, time);
+
+                let time_passed = time.signed_duration_since(activity.time_started);
+                if time_passed.num_seconds() < 0 {
+                    eprintln!("{warning}: Time recorded was negative. Skipping log `{row}`.");
+                    exit(-1);
+                }
+
+                if time_passed.num_hours() >= 10 {
+                    eprintln!(
+                        "{warning}: Time recorded was {} hours. Are you sure this is correct?",
+                        time_passed.num_hours()
+                    );
+                }
+
+                append_to_file(&config.log_file_path, &row.to_string());
+                fs::remove_file(tmp_file_path).unwrap();
+                match activity.label {
+                    Some(v) => println!("Stopped activity {v}. Logged `{row}`."),
+                    None => println!("Stopped activity."),
+                }
+            }
             (Some(activity), Commands::Abort) => {
                 fs::remove_file(tmp_file_path).unwrap();
                 match activity.label {
