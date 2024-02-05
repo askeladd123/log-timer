@@ -4,7 +4,7 @@
 #![allow(unused)]
 use chrono::{DateTime, Datelike, Local, NaiveTime, TimeZone};
 use clap::builder::styling::AnsiColor;
-use clap::{Arg, ArgAction, Command, Parser, Subcommand};
+use clap::{Arg, ArgAction, Command, Parser, Subcommand, ValueEnum};
 use colored::*;
 use serde::{Deserialize, Serialize};
 use std::error::Error;
@@ -87,7 +87,7 @@ impl Display for Activity {
     }
 }
 
-#[derive(Copy, Clone, Debug, Serialize, Deserialize)]
+#[derive(ValueEnum, Copy, Clone, Debug, Serialize, Deserialize)]
 enum RowFormatter {
     Old,
     New,
