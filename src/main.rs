@@ -1,26 +1,19 @@
 // TODO: support white space separated values
-// TODO: support shell completions with clap_generate
 
 #![allow(unused)]
 use crate::cli::*;
-use chrono::{DateTime, Datelike, Local, NaiveTime, TimeZone};
-use clap::builder::styling::AnsiColor;
-use clap::{Arg, ArgAction, Command, Parser, Subcommand, ValueEnum};
+use chrono::{DateTime, Local, NaiveTime};
+use clap::Parser;
 use colored::*;
 use serde::{Deserialize, Serialize};
 use std::error::Error;
 use std::fmt::Display;
-use std::fs::File;
+use std::fs;
 use std::io::Write;
-use std::ops::Not;
 use std::path::{Path, PathBuf};
 use std::process::exit;
-use std::{default, fs};
 
 mod cli;
-
-// TODO: implement time wrapper struct, to automatically convert time formats
-struct Time {}
 
 #[derive(Serialize, Deserialize, Debug)]
 struct Activity {
@@ -54,11 +47,6 @@ impl Display for Activity {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         todo!()
     }
-}
-
-enum RowFormatError {
-    NegativeTime,
-    TimeTooLarge,
 }
 
 impl RowFormatter {
@@ -237,10 +225,10 @@ fn main() {
             }
             (Some(activity), Commands::Stop { time: None }) => {
                 let row = config.row_formatter.format(&activity, Local::now());
-                append_to_file(&config.log_file_path, &row.to_string());
+                append_to_file(&config.log_file_path, &row.to_string()).unwrap();
                 fs::remove_file(tmp_file_path).unwrap();
                 match activity.label {
-                    Some(v) => println!("Stopped activity {v}. Logged `{row}`."),
+                    Some(v) => println!("Stopped activity `{v}`. Logged `{row}`."),
                     None => println!("Stopped activity."),
                 }
             }
@@ -268,10 +256,10 @@ fn main() {
                     );
                 }
 
-                append_to_file(&config.log_file_path, &row.to_string());
+                append_to_file(&config.log_file_path, &row.to_string()).unwrap();
                 fs::remove_file(tmp_file_path).unwrap();
                 match activity.label {
-                    Some(v) => println!("Stopped activity {v}. Logged `{row}`."),
+                    Some(v) => println!("Stopped activity `{v}`. Logged `{row}`."),
                     None => println!("Stopped activity."),
                 }
             }
@@ -288,7 +276,7 @@ fn main() {
             (None, Commands::Abort) => {
                 eprintln!("{warning}: There is no activity being timed, so nothing to abort.")
             }
-            (Some(activity), Commands::Start { label, time }) => {
+            (Some(..), Commands::Start { .. }) => {
                 eprintln!(
                     "{warning}: There is already an activity being timed. Won't start another one."
                 )
