@@ -17,7 +17,7 @@ pub struct Cli {
 pub enum Commands {
     #[command(about = "Begin timing an activity now.")]
     Start {
-        #[arg(help = "Label describing the activity started.")]
+        #[arg(help = "Word or sentance describing the activity started.")]
         label: Option<String>,
 
         #[arg(short, long, value_name = "H24:M", help = "Alternative start time.")]
