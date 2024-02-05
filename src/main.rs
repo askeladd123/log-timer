@@ -355,7 +355,9 @@ fn main() {
                     "{warning}: There is already an activity being timed. Won't start another one."
                 )
             }
-            (.., Commands::GetConfig) => todo!(),
+            (.., Commands::GetConfig) => {
+                println!("{:#?}", config);
+            }
             (.., Commands::Configure { .. }) => unreachable!(),
         }
     } else if tmp_file_path.exists() {
