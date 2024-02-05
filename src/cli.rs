@@ -50,7 +50,10 @@ pub enum Commands {
 
 #[derive(ValueEnum, Copy, Clone, Debug, Serialize, Deserialize)]
 pub enum RowFormatter {
+    #[value(help = "Row format: `date, time-start, time-stop, label`.")]
     Old,
+
+    #[value(help = "Row format: `datetime-start, datetime-stop, label`.")]
     New,
 }
 
@@ -60,8 +63,6 @@ impl Display for RowFormatter {
             f,
             "{}",
             match self {
-                // Self::Old => "date,time-start,time-stop,label",
-                // Self::New => "datetime-start,datetime-stop,label",
                 Self::Old => "old",
                 Self::New => "new",
             }
