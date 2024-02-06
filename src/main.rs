@@ -289,8 +289,14 @@ fn main() {
     } else if tmp_file_path.exists() {
         let activity = Activity::load(&tmp_file_path).unwrap();
         match activity.label {
-            Some(v) => println!("Currentliy timing activity `{v}`."),
-            None => println!("Currently timing activity."),
+            Some(v) => println!(
+                "Currentliy timing activity `{v}`, started at {}.",
+                activity.time_started.format("%H:%M")
+            ),
+            None => println!(
+                "Currently timing activity started at {}.",
+                activity.time_started.format("%H:%M")
+            ),
         }
     } else {
         println!("No activity is beeing timed.");
