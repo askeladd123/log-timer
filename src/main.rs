@@ -290,7 +290,7 @@ fn main() {
         let activity = Activity::load(&tmp_file_path).unwrap();
         match activity.label {
             Some(v) => println!(
-                "Currentliy timing activity `{v}`, started at {}.",
+                "Currently timing activity `{v}`, started at {}.",
                 activity.time_started.format("%H:%M")
             ),
             None => println!(

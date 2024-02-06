@@ -24,7 +24,7 @@ pub enum Commands {
         time: Option<String>,
     },
 
-    #[command(about = "Stop timing an activty, and write it to a log file. ")]
+    #[command(about = "Stop timing an activity, and write it to a log file. ")]
     Stop {
         #[arg(short, long, value_name = "H24:M", help = "Alternative stop time.")]
         time: Option<String>,
