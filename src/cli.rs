@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Parser)]
 #[command(
     about = "A tool that helps you track time when you work (or play).",
-    long_about = "This tool helps you keep track of time. Example usage: \n- `log-timer start washing-dishes`\n- `log-timer stop` when you're done.\nThe program will add an entry with the time you washed dishes to a log file. See `log-timer configure --help` for initial setup of the log file."
+    long_about = "This tool helps you keep track of time. Example usage: \n- 'log-timer start washing-dishes'\n- 'log-timer stop' when you're done.\nThe program will add an entry with the time you washed dishes to a log file. See 'log-timer configure --help' for initial setup of the log file."
 )]
 pub struct Cli {
     #[command(subcommand)]
@@ -50,10 +50,10 @@ pub enum Commands {
 
 #[derive(ValueEnum, Copy, Clone, Debug, Serialize, Deserialize)]
 pub enum RowFormatter {
-    #[value(help = "Row format: `date, time-start, time-stop, label`.")]
+    #[value(help = "Row format: 'date, time-start, time-stop, label'.")]
     Old,
 
-    #[value(help = "Row format: `datetime-start, datetime-stop, label`.")]
+    #[value(help = "Row format: 'datetime-start, datetime-stop, label'.")]
     New,
 }
 
@@ -75,7 +75,7 @@ impl From<String> for RowFormatter {
         match value.to_lowercase().as_str() {
             "old" => Self::Old,
             "new" => Self::New,
-            _ => panic!("Could not convert `{value}` to RowFormatter. "),
+            _ => panic!("Could not convert '{value}' to RowFormatter. "),
         }
     }
 }

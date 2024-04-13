@@ -159,7 +159,7 @@ fn main() {
                 }
                 .save(&config_file_path),
                 _ => {
-                    eprintln!("{warning}: The file provided is not the expected `csv` format: {log_file_path:?}.");
+                    eprintln!("{warning}: The file provided is not the expected 'csv' format: {log_file_path:?}.");
                 }
             }
         } else {
@@ -171,7 +171,7 @@ fn main() {
     let config = match Config::load_checked(&config_file_path) {
         Ok(v) => v,
         Err(ConfigError::ConfigNotFound) => {
-            eprintln!("{warning}: Program not configured yet. Some fields are required, use the `--help` flag for more info.");
+            eprintln!("{warning}: Program not configured yet. Some fields are required, use the '--help' flag for more info.");
             exit(0);
         }
         Err(ConfigError::LogFileNotFound { path_tried }) => {
@@ -195,7 +195,7 @@ fn main() {
                 }
                 .save(&tmp_file_path);
                 match label {
-                    Some(l) => println!("Activity started `{l}`."),
+                    Some(l) => println!("Activity started '{l}'."),
                     None => println!("Activity started."),
                 }
             }
@@ -209,7 +209,7 @@ fn main() {
                 let time = match parse_time(&v) {
                     Ok(t) => t,
                     Err(e) => {
-                        eprintln!("{warning}: Could not parse time input `{v}`. Reason: {e}.");
+                        eprintln!("{warning}: Could not parse time input '{v}'. Reason: {e}.");
                         exit(-1);
                     }
                 };
@@ -219,7 +219,7 @@ fn main() {
                 }
                 .save(&tmp_file_path);
                 match label {
-                    Some(l) => println!("Activity started `{l}` at time {}.", time.format("%H:%M")),
+                    Some(l) => println!("Activity started '{l}' at time {}.", time.format("%H:%M")),
                     None => println!("Activity started at time {}.", time.format("%H:%M")),
                 }
             }
@@ -228,7 +228,7 @@ fn main() {
                 append_to_file(&config.log_file_path, &row.to_string()).unwrap();
                 fs::remove_file(tmp_file_path).unwrap();
                 match activity.label {
-                    Some(v) => println!("Stopped activity `{v}`. Logged `{row}`."),
+                    Some(v) => println!("Stopped activity '{v}'. Logged '{row}'."),
                     None => println!("Stopped activity."),
                 }
             }
@@ -236,7 +236,7 @@ fn main() {
                 let time = match parse_time(&v) {
                     Ok(t) => t,
                     Err(e) => {
-                        eprintln!("{warning}: Could not parse time input `{v}`. Reason: {e}.");
+                        eprintln!("{warning}: Could not parse time input '{v}'. Reason: {e}.");
                         exit(-1);
                     }
                 };
@@ -245,7 +245,7 @@ fn main() {
 
                 let time_passed = time.signed_duration_since(activity.time_started);
                 if time_passed.num_seconds() < 0 {
-                    eprintln!("{warning}: Time recorded was negative. Skipping log `{row}`.");
+                    eprintln!("{warning}: Time recorded was negative. Skipping log '{row}'.");
                     exit(-1);
                 }
 
@@ -259,14 +259,14 @@ fn main() {
                 append_to_file(&config.log_file_path, &row.to_string()).unwrap();
                 fs::remove_file(tmp_file_path).unwrap();
                 match activity.label {
-                    Some(v) => println!("Stopped activity `{v}`. Logged `{row}`."),
+                    Some(v) => println!("Stopped activity '{v}'. Logged '{row}'."),
                     None => println!("Stopped activity."),
                 }
             }
             (Some(activity), Commands::Abort) => {
                 fs::remove_file(tmp_file_path).unwrap();
                 match activity.label {
-                    Some(v) => println!("Aborted activity `{v}`."),
+                    Some(v) => println!("Aborted activity '{v}'."),
                     None => println!("Aborted activity."),
                 }
             }
@@ -290,7 +290,7 @@ fn main() {
         let activity = Activity::load(&tmp_file_path).unwrap();
         match activity.label {
             Some(v) => println!(
-                "Currently timing activity `{v}`, started at {}.",
+                "Currently timing activity '{v}', started at {}.",
                 activity.time_started.format("%H:%M")
             ),
             None => println!(
