@@ -229,7 +229,7 @@ fn main() {
                 fs::remove_file(tmp_file_path).unwrap();
                 match activity.label {
                     Some(v) => println!("Stopped activity '{v}'. Logged '{row}'."),
-                    None => println!("Stopped activity."),
+                    None => println!("Stopped activity. Logged '{row}'."),
                 }
             }
             (Some(activity), Commands::Stop { time: Some(v) }) => {
@@ -260,7 +260,7 @@ fn main() {
                 fs::remove_file(tmp_file_path).unwrap();
                 match activity.label {
                     Some(v) => println!("Stopped activity '{v}'. Logged '{row}'."),
-                    None => println!("Stopped activity."),
+                    None => println!("Stopped activity. Logged '{row}'."),
                 }
             }
             (Some(activity), Commands::Abort) => {
