@@ -185,6 +185,14 @@ fn main() {
     let activity = tmp_file_path
         .exists()
         .then(|| Activity::load(&tmp_file_path).unwrap());
+    let warn_if_time_is_long = |time_passed: &chrono::TimeDelta| {
+        if time_passed.num_hours() >= 10 {
+            eprintln!(
+                "{warning}: Time recorded was {} hours. Are you sure this is correct?",
+                time_passed.num_hours()
+            );
+        }
+    };
 
     if let Some(cmd) = cli.command {
         match (activity, cmd) {
@@ -224,9 +232,15 @@ fn main() {
                 }
             }
             (Some(activity), Commands::Stop { time: None }) => {
-                let row = config.row_formatter.format(&activity, Local::now());
+                let now = Local::now();
+
+                let time_passed = now.signed_duration_since(activity.time_started);
+                warn_if_time_is_long(&time_passed);
+
+                let row = config.row_formatter.format(&activity, now);
                 append_to_file(&config.log_file_path, &row.to_string()).unwrap();
                 fs::remove_file(tmp_file_path).unwrap();
+
                 match activity.label {
                     Some(v) => println!("Stopped activity '{v}'. Logged '{row}'."),
                     None => println!("Stopped activity. Logged '{row}'."),
@@ -249,12 +263,7 @@ fn main() {
                     exit(-1);
                 }
 
-                if time_passed.num_hours() >= 10 {
-                    eprintln!(
-                        "{warning}: Time recorded was {} hours. Are you sure this is correct?",
-                        time_passed.num_hours()
-                    );
-                }
+                warn_if_time_is_long(&time_passed);
 
                 append_to_file(&config.log_file_path, &row.to_string()).unwrap();
                 fs::remove_file(tmp_file_path).unwrap();
@@ -289,10 +298,28 @@ fn main() {
     } else if tmp_file_path.exists() {
         let activity = Activity::load(&tmp_file_path).unwrap();
         match activity.label {
-            Some(v) => println!(
-                "Currently timing activity '{v}', started at {}.",
-                activity.time_started.format("%H:%M")
-            ),
+            Some(v) => {
+                let days_passed = Local::now()
+                    .signed_duration_since(activity.time_started)
+                    .num_days();
+
+                match days_passed {
+                    0 => println!(
+                        "Currently timing activity '{v}', started at {}.",
+                        activity.time_started.format("%H:%M")
+                    ),
+                    1 => println!(
+                        "Currently timing activity '{v}', started yesterday at {}.",
+                        activity.time_started.format("%H:%M")
+                    ),
+                    _ => {
+                        println!(
+                            "Currently timing activity '{v}', started {days_passed} days ago at {}.",
+                            activity.time_started.format("%H:%M")
+                        )
+                    }
+                }
+            }
             None => println!(
                 "Currently timing activity started at {}.",
                 activity.time_started.format("%H:%M")
