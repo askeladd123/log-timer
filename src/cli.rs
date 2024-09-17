@@ -1,6 +1,6 @@
 use std::{fmt::Display, path::PathBuf};
 
-use clap::{command, Parser, Subcommand, ValueEnum};
+use clap::{command, Args, Parser, Subcommand, ValueEnum};
 use serde::{Deserialize, Serialize};
 
 #[derive(Parser)]
@@ -44,9 +44,41 @@ pub enum Commands {
     },
 
     #[command(
-        about = "A quick way to see how the program is configured. This is from a file stored somewhere on your machine."
+        about = "Has different subcommands for getting information about logs and configuration."
     )]
-    GetConfig,
+    Get(GetArgs),
+}
+
+#[derive(Debug, Args)]
+#[command(flatten_help = true)]
+pub struct GetArgs {
+    #[command(subcommand)]
+    pub command: GetCommands,
+}
+
+#[derive(Debug, Subcommand, Copy, Clone)]
+pub enum GetCommands {
+    #[command(
+        about = "Get a sanitized version of the log file. Essentially without comments. Format: csv"
+    )]
+    Logs,
+
+    #[command(
+        about = "Like the command 'logs' but if one day has multiple activities, summarize them. Format: csv"
+    )]
+    Days,
+
+    #[command(about = "Get stats for today session. Format: ?")]
+    Today,
+
+    #[command(about = "Get stats from all sessions. Format: ?")]
+    Total,
+
+    #[command(about = "Get contents of config file. Format: json")]
+    Config,
+
+    #[command(about = "Get path of config file. Format: string")]
+    ConfigPath,
 }
 
 #[derive(ValueEnum, Copy, Clone, Debug, Serialize, Deserialize)]
@@ -87,3 +119,25 @@ impl From<String> for RowFormatter {
         }
     }
 }
+
+// enum Row {
+//     V2_1 {
+//         start: DateTime<FixedOffset>,
+//         stop: DateTime<FixedOffset>,
+//         duration: Timelike,
+//         label: String,
+//     },
+//     V2_0 {
+//         start: DateTime<FixedOffset>,
+//         stop: DateTime<FixedOffset>,
+//         duration: Timelike,
+//         label: String,
+//     },
+//     V1_0 {
+//         date: NaiveDate,
+//         start: Timelike,
+//         stop: Timelike,
+//         duration: Timelike,
+//         label: String,
+//     },
+// }

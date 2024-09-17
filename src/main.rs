@@ -4,19 +4,25 @@
 // TODO: add options 'get --first' and 'get --last' for filtering
 // TODO: generate completions with subcommand instead of at build time
 // TODO: default to internal log file; then program works out of the box
+// TODO: add reflexive row formatter that loads correct format
+// TODO: change from DateTime<Local> to DateTime<FixedOffset> to support time zones
+// TODO: `log-timer get total` should have a flag where you can get HH:MM instead of just minutes
 
 #![allow(unused)]
 use crate::cli::*;
-use chrono::{DateTime, Local, NaiveTime, SecondsFormat};
+use chrono::{
+    DateTime, FixedOffset, Local, NaiveDate, NaiveDateTime, NaiveTime, SecondsFormat, Utc,
+};
 use clap::Parser;
 use colored::*;
+use csv::Writer;
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use std::error::Error;
-use std::fmt::Display;
-use std::fs;
-use std::io::Write;
+use std::fmt::{Debug, Display};
 use std::path::{Path, PathBuf};
 use std::process::exit;
+use std::{fs, io};
 
 mod cli;
 
@@ -83,6 +89,10 @@ impl RowFormatter {
             }
         }
     }
+
+    // fn get_row() -> Row {
+    //     unimplemented!()
+    // }
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -145,7 +155,7 @@ fn parse_time(time_str: &str) -> Result<DateTime<Local>, chrono::format::ParseEr
     Ok(datetime)
 }
 
-fn main() {
+fn main() -> Result<(), Box<dyn Error>> {
     let warning = "warning".yellow();
 
     let cli = Cli::parse();
@@ -305,8 +315,77 @@ fn main() {
                     "{warning}: There is already an activity being timed. Won't start another one."
                 )
             }
-            (.., Commands::GetConfig) => {
-                println!("{:#?}", config);
+            (.., Commands::Get(GetArgs { command })) => {
+                let mut reader_csv = csv::ReaderBuilder::new()
+                    .flexible(false)
+                    .has_headers(true)
+                    .comment(Some(b'#'))
+                    .from_path(&config.log_file_path)?;
+
+                let mut writer_csv = csv::Writer::from_writer(io::stdout());
+
+                match command {
+                    GetCommands::Config => {
+                        println!("{}", serde_json::to_string_pretty(&config)?);
+                    }
+                    GetCommands::ConfigPath => {
+                        println!("{}", config_file_path.to_str().unwrap());
+                    }
+                    GetCommands::Logs => {
+                        writer_csv.write_record(reader_csv.headers()?);
+                        for result in reader_csv.records() {
+                            writer_csv.write_record(&result?);
+                        }
+                        writer_csv.flush()?;
+                    }
+                    GetCommands::Today => {
+                        match config.row_formatter {
+                            RowFormatter::V2_1 | RowFormatter::V2_0 => {}
+                            _ => unimplemented!(),
+                        };
+
+                        writer_csv.write_record(reader_csv.headers()?);
+                        for result in reader_csv.records() {
+                            let result = result?;
+                            let (start, stop) = (
+                                result[0].parse::<DateTime<FixedOffset>>()?,
+                                result[1].parse::<DateTime<FixedOffset>>()?,
+                            );
+
+                            if [start.date_naive(), stop.date_naive()]
+                                .contains(&Local::now().date_naive())
+                            {
+                                writer_csv.write_byte_record(result.as_byte_record());
+                            }
+                        }
+                    }
+                    GetCommands::Total => {
+                        match config.row_formatter {
+                            RowFormatter::V2_1 => {}
+                            _ => unimplemented!(),
+                        };
+
+                        let mut minutes = HashMap::new();
+                        for result in reader_csv.deserialize() {
+                            let (start, stop, _, label): (
+                                DateTime<Local>,
+                                DateTime<Local>,
+                                String,
+                                String,
+                            ) = result?;
+
+                            let duration = stop.signed_duration_since(start);
+                            *minutes.entry(label.clone()).or_insert(0) += duration.num_minutes();
+                        }
+
+                        writer_csv.write_record(["label", "minutes"]);
+                        for (key, value) in minutes {
+                            writer_csv.write_record([key, value.to_string()]);
+                        }
+                        writer_csv.flush();
+                    }
+                    _ => unimplemented!(),
+                }
             }
             (.., Commands::Configure { .. }) => unreachable!(),
         }
@@ -343,4 +422,5 @@ fn main() {
     } else {
         println!("No activity is being timed.");
     }
+    Ok(())
 }
