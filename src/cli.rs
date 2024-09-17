@@ -39,7 +39,7 @@ pub enum Commands {
         #[arg(short, long)]
         log_file_path: PathBuf,
 
-        #[arg(short, long, default_value_t=RowFormatter::V2_0)]
+        #[arg(short, long, default_value_t=RowFormatter::V2_1)]
         row_formatter: RowFormatter,
     },
 

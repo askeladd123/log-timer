@@ -1,4 +1,5 @@
 // TODO: support white space separated values
+// TODO: consider removing csv column `duration` as it can be derived from `datetime-start` and `datetime-stop`
 
 #![allow(unused)]
 use crate::cli::*;
@@ -50,31 +51,31 @@ impl Display for Activity {
 }
 
 impl RowFormatter {
-    fn format(&self, activity: &Activity, time: DateTime<Local>) -> impl Display {
+    fn make_row(&self, activity: &Activity, time: DateTime<Local>) -> Vec<String> {
         let time_passed = time.signed_duration_since(activity.time_started);
         let hours_passed = time_passed.num_hours();
         let minutes_passed = time_passed.num_minutes() % 60;
+        let duration = format!("{hours_passed:02}:{minutes_passed:02}");
         let label = activity.label.clone().unwrap_or("-".into());
 
         match self {
-            // TODO: use csv parser to format row
             Self::V2_1 => {
                 let start = activity
                     .time_started
                     .to_rfc3339_opts(SecondsFormat::Secs, true);
                 let finish = time.to_rfc3339_opts(SecondsFormat::Secs, true);
-                format!("{start},{finish},{hours_passed:02}:{minutes_passed:02},{label}")
+                vec![start, finish, duration, label]
             }
             Self::V2_0 => {
-                let start = activity.time_started.format("%Y-%m-%d-%H-%M");
-                let finish = time.format("%Y-%m-%d-%H-%M");
-                format!("{start},{finish},{hours_passed:02}:{minutes_passed:02},{label}")
+                let start = activity.time_started.format("%Y-%m-%d-%H-%M").to_string();
+                let finish = time.format("%Y-%m-%d-%H-%M").to_string();
+                vec![start, finish, duration, label]
             }
             Self::V1_0 => {
-                let date = activity.time_started.format("%Y-%m-%d");
-                let start = activity.time_started.format("%H:%M");
-                let finish = time.format("%H:%M");
-                format!("{date},{start},{finish},{hours_passed:02}:{minutes_passed:02},{label}")
+                let date = activity.time_started.format("%Y-%m-%d").to_string();
+                let start = activity.time_started.format("%H:%M").to_string();
+                let finish = time.format("%H:%M").to_string();
+                vec![date, start, finish, duration, label]
             }
         }
     }
@@ -117,14 +118,16 @@ impl Config {
     }
 }
 
-fn append_to_file(filename: &PathBuf, content: &str) -> std::io::Result<()> {
+fn append_csv(filename: &PathBuf, row: &[String]) -> std::io::Result<()> {
     let mut file = fs::OpenOptions::new()
-        .write(true)
         .append(true)
         .create(true)
         .open(filename)?;
 
-    writeln!(file, "{}", content)?;
+    let mut wtr = csv::Writer::from_writer(file);
+    wtr.write_record(row)?;
+    wtr.flush()?;
+
     Ok(())
 }
 
@@ -245,13 +248,13 @@ fn main() {
                 let time_passed = now.signed_duration_since(activity.time_started);
                 warn_if_time_is_long(&time_passed);
 
-                let row = config.row_formatter.format(&activity, now);
-                append_to_file(&config.log_file_path, &row.to_string()).unwrap();
+                let row = config.row_formatter.make_row(&activity, now);
+                append_csv(&config.log_file_path, &row).unwrap();
                 fs::remove_file(tmp_file_path).unwrap();
 
                 match activity.label {
-                    Some(v) => println!("Stopped activity '{v}'. Logged '{row}'."),
-                    None => println!("Stopped activity. Logged '{row}'."),
+                    Some(v) => println!("Stopped activity '{v}'. Logged '{row:?}'."),
+                    None => println!("Stopped activity. Logged '{row:?}'."),
                 }
             }
             (Some(activity), Commands::Stop { time: Some(v) }) => {
@@ -263,21 +266,21 @@ fn main() {
                     }
                 };
 
-                let row = config.row_formatter.format(&activity, time);
+                let row = config.row_formatter.make_row(&activity, time);
 
                 let time_passed = time.signed_duration_since(activity.time_started);
                 if time_passed.num_seconds() < 0 {
-                    eprintln!("{warning}: Time recorded was negative. Skipping log '{row}'.");
+                    eprintln!("{warning}: Time recorded was negative. Skipping log '{row:?}'.");
                     exit(-1);
                 }
 
                 warn_if_time_is_long(&time_passed);
 
-                append_to_file(&config.log_file_path, &row.to_string()).unwrap();
+                append_csv(&config.log_file_path, &row).unwrap();
                 fs::remove_file(tmp_file_path).unwrap();
                 match activity.label {
-                    Some(v) => println!("Stopped activity '{v}'. Logged '{row}'."),
-                    None => println!("Stopped activity. Logged '{row}'."),
+                    Some(v) => println!("Stopped activity '{v}'. Logged '{row:?}'."),
+                    None => println!("Stopped activity. Logged '{row:?}'."),
                 }
             }
             (Some(activity), Commands::Abort) => {
