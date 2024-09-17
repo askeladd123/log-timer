@@ -2,7 +2,7 @@
 
 #![allow(unused)]
 use crate::cli::*;
-use chrono::{DateTime, Local, NaiveTime};
+use chrono::{DateTime, Local, NaiveTime, SecondsFormat};
 use clap::Parser;
 use colored::*;
 use serde::{Deserialize, Serialize};
@@ -57,12 +57,20 @@ impl RowFormatter {
         let label = activity.label.clone().unwrap_or("-".into());
 
         match self {
-            Self::New => {
+            // TODO: use csv parser to format row
+            Self::V2_1 => {
+                let start = activity
+                    .time_started
+                    .to_rfc3339_opts(SecondsFormat::Secs, true);
+                let finish = time.to_rfc3339_opts(SecondsFormat::Secs, true);
+                format!("{start},{finish},{hours_passed:02}:{minutes_passed:02},{label}")
+            }
+            Self::V2_0 => {
                 let start = activity.time_started.format("%Y-%m-%d-%H-%M");
                 let finish = time.format("%Y-%m-%d-%H-%M");
                 format!("{start},{finish},{hours_passed:02}:{minutes_passed:02},{label}")
             }
-            Self::Old => {
+            Self::V1_0 => {
                 let date = activity.time_started.format("%Y-%m-%d");
                 let start = activity.time_started.format("%H:%M");
                 let finish = time.format("%H:%M");

@@ -39,7 +39,7 @@ pub enum Commands {
         #[arg(short, long)]
         log_file_path: PathBuf,
 
-        #[arg(short, long, default_value_t=RowFormatter::New)]
+        #[arg(short, long, default_value_t=RowFormatter::V2_0)]
         row_formatter: RowFormatter,
     },
 
@@ -51,11 +51,16 @@ pub enum Commands {
 
 #[derive(ValueEnum, Copy, Clone, Debug, Serialize, Deserialize)]
 pub enum RowFormatter {
-    #[value(help = "Row format: 'date, time-start, time-stop, label'.")]
-    Old,
+    #[value(help = "Row format: 'date, time-start, time-stop, label'. ")]
+    V1_0,
 
-    #[value(help = "Row format: 'datetime-start, datetime-stop, label'.")]
-    New,
+    #[value(help = "Row format: 'datetime-start, datetime-stop, label'. ")]
+    V2_0,
+
+    #[value(
+        help = "Row format: 'datetime-start, datetime-stop, label' where datetime is in 'RFC 3339'. "
+    )]
+    V2_1,
 }
 
 impl Display for RowFormatter {
@@ -64,8 +69,9 @@ impl Display for RowFormatter {
             f,
             "{}",
             match self {
-                Self::Old => "old",
-                Self::New => "new",
+                Self::V2_1 => "version 2.1",
+                Self::V2_0 => "version 2.0",
+                Self::V1_0 => "version 1.0",
             }
         )
     }
@@ -74,8 +80,9 @@ impl Display for RowFormatter {
 impl From<String> for RowFormatter {
     fn from(value: String) -> Self {
         match value.to_lowercase().as_str() {
-            "old" => Self::Old,
-            "new" => Self::New,
+            "v2-1" => Self::V2_1,
+            "v2-0" => Self::V2_0,
+            "v1-0" => Self::V1_0,
             _ => panic!("Could not convert '{value}' to RowFormatter. "),
         }
     }
