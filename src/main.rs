@@ -1,5 +1,9 @@
 // TODO: support white space separated values
 // TODO: consider removing csv column `duration` as it can be derived from `datetime-start` and `datetime-stop`
+// TODO: change config file format to 'toml'
+// TODO: add options 'get --first' and 'get --last' for filtering
+// TODO: generate completions with subcommand instead of at build time
+// TODO: default to internal log file; then program works out of the box
 
 #![allow(unused)]
 use crate::cli::*;
