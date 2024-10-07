@@ -341,6 +341,6 @@ fn main() {
             ),
         }
     } else {
-        println!("No activity is beeing timed.");
+        println!("No activity is being timed.");
     }
 }
