@@ -3,10 +3,11 @@
 // TODO: change config file format to 'toml'
 // TODO: add options 'get --first' and 'get --last' for filtering
 // TODO: generate completions with subcommand instead of at build time
-// TODO: default to internal log file; then program works out of the box
 // TODO: add reflexive row formatter that loads correct format
 // TODO: change from DateTime<Local> to DateTime<FixedOffset> to support time zones
 // TODO: `log-timer get total` should have a flag where you can get HH:MM instead of just minutes
+// TODO: add warning when log is empty
+// TODO: integration testing with docker and nushell?
 
 #![allow(unused)]
 use crate::cli::*;
@@ -25,6 +26,9 @@ use std::process::exit;
 use std::{fs, io};
 
 mod cli;
+
+/// folder name of config and data dirs
+const DIR_NAME: &str = "log-timer";
 
 #[derive(Serialize, Deserialize, Debug)]
 struct Activity {
@@ -103,7 +107,7 @@ struct Config {
 
 enum ConfigError {
     ConfigNotFound,
-    LogFileNotFound { path_tried: PathBuf },
+    LogFileNotFound { path_tried: PathBuf, config: Config },
 }
 
 impl Config {
@@ -120,7 +124,8 @@ impl Config {
             Ok(config)
         } else {
             Err(ConfigError::LogFileNotFound {
-                path_tried: config.log_file_path,
+                path_tried: config.log_file_path.clone(),
+                config,
             })
         }
     }
@@ -129,6 +134,15 @@ impl Config {
         let json = serde_json::to_string_pretty(self).unwrap();
         let mut file = std::fs::File::create(path).unwrap();
         std::io::Write::write_all(&mut file, json.as_bytes()).unwrap();
+    }
+}
+
+impl Default for Config {
+    fn default() -> Self {
+        Self {
+            log_file_path: dirs::data_dir().unwrap().join(DIR_NAME).join("log.csv"),
+            row_formatter: RowFormatter::V2_1,
+        }
     }
 }
 
@@ -160,50 +174,69 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     let cli = Cli::parse();
 
-    let conf_dir = dirs::config_dir().unwrap().join("log-timer");
+    let conf_dir = dirs::config_dir().unwrap().join(DIR_NAME);
     if !conf_dir.exists() {
         fs::create_dir(&conf_dir).unwrap();
     }
-    let data_dir = dirs::data_dir().unwrap().join("log-timer");
+    let data_dir = dirs::data_dir().unwrap().join(DIR_NAME);
     if !data_dir.exists() {
         fs::create_dir(&data_dir).unwrap();
     }
     let config_file_name = Path::new("config.json");
     let config_file_path = conf_dir.join(config_file_name);
 
-    if let Some(Commands::Configure {
-        ref log_file_path,
-        row_formatter,
-    }) = cli.command
-    {
-        if let Ok(v) = log_file_path.canonicalize() {
-            match v.extension() {
-                Some(ext) if ext.eq_ignore_ascii_case("csv") => Config {
-                    log_file_path: v,
-                    row_formatter,
-                }
-                .save(&config_file_path),
-                _ => {
-                    eprintln!("{warning}: The file provided is not the expected 'csv' format: {log_file_path:?}.");
-                }
-            }
-        } else {
-            eprintln!("{warning}: The file provided does not exist: {log_file_path:?}.");
-        };
-        exit(0);
-    }
-
     let config = match Config::load_checked(&config_file_path) {
         Ok(v) => v,
-        Err(ConfigError::ConfigNotFound) => {
-            eprintln!("{warning}: Program not configured yet. Some fields are required, use the '--help' flag for more info.");
-            exit(0);
-        }
-        Err(ConfigError::LogFileNotFound { path_tried }) => {
-            eprintln!("{warning}: Configuration required, log file not found at {path_tried:?}.");
-            exit(-1);
+        Err(ConfigError::ConfigNotFound) => Config::default(),
+        Err(ConfigError::LogFileNotFound { path_tried, config }) => {
+            let mut file = fs::OpenOptions::new()
+                .create(true)
+                .write(true)
+                .truncate(true)
+                .open(&path_tried)?;
+            let mut wtr = csv::Writer::from_writer(file);
+            wtr.write_record(config.row_formatter.get_column_names());
+            wtr.flush()?;
+            println!("Created new log file at {path_tried:?}.");
+            config
         }
     };
+
+    if let Some(Commands::Config(args)) = cli.command {
+        match args.command {
+            ConfigCommands::Set {
+                log_file_path,
+                row_formatter,
+            } => {
+                if let Ok(v) = log_file_path.canonicalize() {
+                    match v.extension() {
+                        Some(ext) if ext.eq_ignore_ascii_case("csv") => Config {
+                            log_file_path: v,
+                            row_formatter,
+                        }
+                        .save(&config_file_path),
+                        _ => {
+                            eprintln!("{warning}: The file provided is not the expected 'csv' format: {log_file_path:?}.");
+                            exit(1);
+                        }
+                    }
+                } else {
+                    eprintln!("{warning}: The file provided does not exist: {log_file_path:?}.");
+                    exit(1)
+                };
+            }
+            ConfigCommands::SetDefault => {
+                Config::default().save(&config_file_path);
+                println!("Configuration options reset.");
+            }
+            ConfigCommands::Get => println!("{}", serde_json::to_string_pretty(&config)?),
+            ConfigCommands::GetDefault => {
+                println!("{}", serde_json::to_string_pretty(&Config::default())?)
+            }
+            ConfigCommands::Path => println!("{}", config_file_path.to_str().unwrap()),
+        }
+        exit(0);
+    }
 
     let tmp_file_name = Path::new("tmp.json");
     let tmp_file_path = data_dir.join(tmp_file_name);
@@ -325,12 +358,6 @@ fn main() -> Result<(), Box<dyn Error>> {
                 let mut writer_csv = csv::Writer::from_writer(io::stdout());
 
                 match command {
-                    GetCommands::Config => {
-                        println!("{}", serde_json::to_string_pretty(&config)?);
-                    }
-                    GetCommands::ConfigPath => {
-                        println!("{}", config_file_path.to_str().unwrap());
-                    }
                     GetCommands::Logs => {
                         writer_csv.write_record(reader_csv.headers()?);
                         for result in reader_csv.records() {
@@ -387,7 +414,7 @@ fn main() -> Result<(), Box<dyn Error>> {
                     _ => unimplemented!(),
                 }
             }
-            (.., Commands::Configure { .. }) => unreachable!(),
+            (.., Commands::Config { .. }) => unreachable!(),
         }
     } else if tmp_file_path.exists() {
         let activity = Activity::load(&tmp_file_path).unwrap();
