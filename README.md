@@ -32,3 +32,12 @@ You will need *git*, and *the rust toolchain* to compile.
 
 # run from anywhere
 To make it easier to run, add the binary to the `PATH` environment variable, or make a *shell alias*.
+
+# test
+You can run the integration test script `test.nu` with 
+```
+docker build . --tag log-timer
+docker run log-timer
+```
+
+> `test.nu` can be run with the *nushell interpreter* but this will mess around with the config and log file

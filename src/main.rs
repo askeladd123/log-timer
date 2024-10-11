@@ -7,7 +7,6 @@
 // TODO: change from DateTime<Local> to DateTime<FixedOffset> to support time zones
 // TODO: `log-timer get total` should have a flag where you can get HH:MM instead of just minutes
 // TODO: add warning when log is empty
-// TODO: integration testing with docker and nushell?
 
 #![allow(unused)]
 use crate::cli::*;
@@ -176,11 +175,11 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     let conf_dir = dirs::config_dir().unwrap().join(DIR_NAME);
     if !conf_dir.exists() {
-        fs::create_dir(&conf_dir).unwrap();
+        fs::create_dir_all(&conf_dir).unwrap();
     }
     let data_dir = dirs::data_dir().unwrap().join(DIR_NAME);
     if !data_dir.exists() {
-        fs::create_dir(&data_dir).unwrap();
+        fs::create_dir_all(&data_dir).unwrap();
     }
     let config_file_name = Path::new("config.json");
     let config_file_path = conf_dir.join(config_file_name);
