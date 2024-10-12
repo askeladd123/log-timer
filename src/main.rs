@@ -11,7 +11,8 @@
 #![allow(unused)]
 use crate::cli::*;
 use chrono::{
-    DateTime, FixedOffset, Local, NaiveDate, NaiveDateTime, NaiveTime, SecondsFormat, Utc,
+    DateTime, FixedOffset, Local, NaiveDate, NaiveDateTime, NaiveTime, RoundingError,
+    SecondsFormat, Utc,
 };
 use clap::Parser;
 use colored::*;
@@ -207,22 +208,50 @@ fn main() -> Result<(), Box<dyn Error>> {
                 log_file_path,
                 row_formatter,
             } => {
-                if let Ok(v) = log_file_path.canonicalize() {
-                    match v.extension() {
-                        Some(ext) if ext.eq_ignore_ascii_case("csv") => Config {
-                            log_file_path: v,
-                            row_formatter,
+                let mut config = config.clone();
+
+                if let Some(log_file_path) = log_file_path {
+                    if let Ok(v) = log_file_path.canonicalize() {
+                        match v.extension() {
+                            Some(ext) if ext.eq_ignore_ascii_case("csv") => {
+                                config.log_file_path = v.clone();
+                                println!("Log file now at {v:?}.");
+                            }
+                            _ => {
+                                eprintln!("{warning}: The file provided is not the expected 'csv' format: {log_file_path:?}.");
+                                exit(1);
+                            }
                         }
-                        .save(&config_file_path),
-                        _ => {
-                            eprintln!("{warning}: The file provided is not the expected 'csv' format: {log_file_path:?}.");
-                            exit(1);
-                        }
-                    }
-                } else {
-                    eprintln!("{warning}: The file provided does not exist: {log_file_path:?}.");
-                    exit(1)
-                };
+                    } else {
+                        eprintln!(
+                            "{warning}: The file provided does not exist: {log_file_path:?}."
+                        );
+                        exit(1)
+                    };
+                }
+                if let Some(row_formatter) = row_formatter {
+                    config.row_formatter = row_formatter;
+                    println!("Row formatter is now {row_formatter}.");
+                }
+
+                config.save(&config_file_path);
+
+                // if let Ok(v) = log_file_path.canonicalize() {
+                //     match v.extension() {
+                //         Some(ext) if ext.eq_ignore_ascii_case("csv") => Config {
+                //             log_file_path: v,
+                //             row_formatter,
+                //         }
+                //         .save(&config_file_path),
+                //         _ => {
+                //             eprintln!("{warning}: The file provided is not the expected 'csv' format: {log_file_path:?}.");
+                //             exit(1);
+                //         }
+                //     }
+                // } else {
+                //     eprintln!("{warning}: The file provided does not exist: {log_file_path:?}.");
+                //     exit(1)
+                // };
             }
             ConfigCommands::SetDefault => {
                 Config::default().save(&config_file_path);

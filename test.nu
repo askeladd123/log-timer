@@ -1,6 +1,8 @@
 #!/usr/bin/env nu
 # this script has integration tests for 'log-timer' cli
 
+use std assert
+
 alias log-timer = ./target/debug/log-timer
 
 let functions = [
@@ -8,9 +10,27 @@ let functions = [
     [start-stop-label, {
         log-timer start test
         log-timer stop
-        log-timer get logs | str contains test
+        assert (log-timer get logs | str contains test)
         }
     ],
+    [overwrite-options, {
+        touch ~/log-1.csv
+        log-timer config set --log-file-path log-1.csv --row-formatter v1-0
+        let config = log-timer config get | from json
+        assert ($config.log_file_path == ('~/log-1.csv' | path expand))
+        assert ($config.row_formatter == V1_0)
+
+        log-timer config set --row-formatter v2-0
+        let config = log-timer config get | from json
+        assert ($config.log_file_path == ('~/log-1.csv' | path expand))
+        assert ($config.row_formatter == V2_0)
+
+        touch ~/log-2.csv
+        log-timer config set --log-file-path ~/log-2.csv
+        let config = log-timer config get | from json
+        assert ($config.log_file_path == ('~/log-2.csv' | path expand))
+        assert ($config.row_formatter == V2_0)
+    }]
 ]
 
 def run_tests [functions, passed, total] -> int {
@@ -19,7 +39,8 @@ def run_tests [functions, passed, total] -> int {
         let text = $"[($pair.index + 1) / ($total)] ($pair.item.name): "
 
         print $"(ansi yellow)($text)running(ansi reset)"
-        if (do --ignore-program-errors $pair.item.func) and ($env.LAST_EXIT_CODE == 0) {
+        do --ignore-program-errors $pair.item.func
+        if $env.LAST_EXIT_CODE == 0 {
             print $"(ansi green)($text)success(ansi reset)"
             $passed += 1
         } else {
@@ -27,8 +48,8 @@ def run_tests [functions, passed, total] -> int {
         }
     
         print ""
-        return $passed
     }
+    return $passed
 }
 
 def main [password] {

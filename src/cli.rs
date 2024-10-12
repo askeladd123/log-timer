@@ -53,10 +53,10 @@ pub enum ConfigCommands {
     #[command(about = "Change configuration options by overriding. Example: set log file path.")]
     Set {
         #[arg(short, long)]
-        log_file_path: PathBuf,
+        log_file_path: Option<PathBuf>,
 
         #[arg(short, long)]
-        row_formatter: RowFormatter,
+        row_formatter: Option<RowFormatter>,
     },
 
     #[command(about = "Reset configuration to default.")]
