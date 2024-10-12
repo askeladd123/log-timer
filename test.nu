@@ -16,14 +16,14 @@ let functions = [
 def run_tests [functions, passed, total] -> int {
     mut passed = $passed
     for pair in ($functions | enumerate) {
-        let i = $pair.index + 1
+        let text = $"[($pair.index + 1) / ($total)] ($pair.item.name): "
 
-        print $"\r(ansi yellow)[($i) / ($total)]: running(ansi reset)"
+        print $"(ansi yellow)($text)running(ansi reset)"
         if (do --ignore-program-errors $pair.item.func) and ($env.LAST_EXIT_CODE == 0) {
-            print $"\r(ansi green)[($i) / ($total)]: success(ansi reset)"
+            print $"(ansi green)($text)success(ansi reset)"
             $passed += 1
         } else {
-            print $"\r(ansi red)[($i) / ($total)]: failed(ansi reset)"
+            print $"(ansi red)($text)failed(ansi reset)"
         }
     
         print ""
