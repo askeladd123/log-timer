@@ -2,7 +2,6 @@
 // TODO: consider removing csv column `duration` as it can be derived from `datetime-start` and `datetime-stop`
 // TODO: change config file format to 'toml'
 // TODO: add options 'get --first' and 'get --last' for filtering
-// TODO: generate completions with subcommand instead of at build time
 // TODO: add reflexive row formatter that loads correct format
 // TODO: change from DateTime<Local> to DateTime<FixedOffset> to support time zones
 // TODO: `log-timer get total` should have a flag where you can get HH:MM instead of just minutes
