@@ -1,3 +1,5 @@
+// NOTE: the completions are generated in 'build.rs'. That restricts this file to only have the clap cli definition
+
 use clap::{command, Args, Parser, Subcommand, ValueEnum};
 use serde::{Deserialize, Serialize};
 use std::{fmt::Display, path::PathBuf};
@@ -115,16 +117,6 @@ pub enum RowFormatter {
     V2_1,
 }
 
-impl RowFormatter {
-    pub fn get_column_names(&self) -> Vec<&str> {
-        match self {
-            RowFormatter::V1_0 => vec!["date", "time-start", "time-stop", "duration", "label"],
-            RowFormatter::V2_0 => vec!["datetime-start, datetime-stop", "duration", "label"],
-            RowFormatter::V2_1 => vec!["datetime-start", "datetime-stop", "duration", "label"],
-        }
-    }
-}
-
 impl Display for RowFormatter {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
@@ -149,25 +141,3 @@ impl From<String> for RowFormatter {
         }
     }
 }
-
-// enum Row {
-//     V2_1 {
-//         start: DateTime<FixedOffset>,
-//         stop: DateTime<FixedOffset>,
-//         duration: Timelike,
-//         label: String,
-//     },
-//     V2_0 {
-//         start: DateTime<FixedOffset>,
-//         stop: DateTime<FixedOffset>,
-//         duration: Timelike,
-//         label: String,
-//     },
-//     V1_0 {
-//         date: NaiveDate,
-//         start: Timelike,
-//         stop: Timelike,
-//         duration: Timelike,
-//         label: String,
-//     },
-// }

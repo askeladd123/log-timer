@@ -1,12 +1,14 @@
 #![allow(unused)]
-use crate::cli::*;
 use chrono::{
     DateTime, FixedOffset, Local, NaiveDate, NaiveDateTime, NaiveTime, RoundingError,
     SecondsFormat, Utc,
 };
 use clap::Parser;
+use cli::RowFormatter;
+use cli::{Cli, Commands, ConfigCommands, GetArgs, GetCommands};
 use colored::*;
 use csv::Writer;
+use row::RowOutput;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::error::Error;
@@ -16,13 +18,14 @@ use std::path::{Path, PathBuf};
 use std::process::exit;
 use std::{fs, io};
 
-mod cli;
+pub mod cli;
+pub mod row;
 
 /// folder name of config and data dirs
 const DIR_NAME: &str = "log-timer";
 
 #[derive(Serialize, Deserialize, Debug)]
-struct Activity {
+pub struct Activity {
     time_started: DateTime<Local>,
     label: Option<String>,
 }
@@ -53,41 +56,6 @@ impl Display for Activity {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         todo!()
     }
-}
-
-impl RowFormatter {
-    fn make_row(&self, activity: &Activity, time: DateTime<Local>) -> Vec<String> {
-        let time_passed = time.signed_duration_since(activity.time_started);
-        let hours_passed = time_passed.num_hours();
-        let minutes_passed = time_passed.num_minutes() % 60;
-        let duration = format!("{hours_passed:02}:{minutes_passed:02}");
-        let label = activity.label.clone().unwrap_or("-".into());
-
-        match self {
-            Self::V2_1 => {
-                let start = activity
-                    .time_started
-                    .to_rfc3339_opts(SecondsFormat::Secs, true);
-                let finish = time.to_rfc3339_opts(SecondsFormat::Secs, true);
-                vec![start, finish, duration, label]
-            }
-            Self::V2_0 => {
-                let start = activity.time_started.format("%Y-%m-%d-%H-%M").to_string();
-                let finish = time.format("%Y-%m-%d-%H-%M").to_string();
-                vec![start, finish, duration, label]
-            }
-            Self::V1_0 => {
-                let date = activity.time_started.format("%Y-%m-%d").to_string();
-                let start = activity.time_started.format("%H:%M").to_string();
-                let finish = time.format("%H:%M").to_string();
-                vec![date, start, finish, duration, label]
-            }
-        }
-    }
-
-    // fn get_row() -> Row {
-    //     unimplemented!()
-    // }
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -412,10 +380,8 @@ fn main() -> Result<(), Box<dyn Error>> {
                         writer_csv.write_record(reader_csv.headers()?);
                         for result in reader_csv.records() {
                             let result = result?;
-                            let (start, stop) = (
-                                result[0].parse::<DateTime<FixedOffset>>()?,
-                                result[1].parse::<DateTime<FixedOffset>>()?,
-                            );
+                            let RowOutput { start, stop, .. } =
+                                config.row_formatter.read_row(&result);
 
                             if [start.date_naive(), stop.date_naive()]
                                 .contains(&Local::now().date_naive())
@@ -431,16 +397,12 @@ fn main() -> Result<(), Box<dyn Error>> {
                         };
 
                         let mut minutes = HashMap::new();
-                        for result in reader_csv.deserialize() {
-                            let (start, stop, _, label): (
-                                DateTime<Local>,
-                                DateTime<Local>,
-                                String,
-                                String,
-                            ) = result?;
+                        for result in reader_csv.records() {
+                            let out = config.row_formatter.read_row(&result?);
 
-                            let duration = stop.signed_duration_since(start);
-                            *minutes.entry(label.clone()).or_insert(0) += duration.num_minutes();
+                            let duration = out.stop.signed_duration_since(out.start);
+                            *minutes.entry(out.label.clone()).or_insert(0) +=
+                                duration.num_minutes();
                         }
 
                         writer_csv.write_record(["label", "minutes"]);
