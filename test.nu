@@ -1,7 +1,25 @@
-#!/usr/bin/env nu
+# WARNING: uses nushell on commit e735bd475f53b62e30a3e4a041e21462db63ac47
+# this is because it uses $err.rendered from `try catch`
+
 # this script has integration tests for 'log-timer' cli
 
-use std assert
+# TODO: find out why std assert does not work
+
+def assert [
+    condition: bool,
+    message?: string,
+    --error-label: record<text: string, span: record<start: int, end: int>>
+] {
+    if not $condition {
+        error make {
+            msg: ($message | default "Assertion failed."),
+            label: ($error_label | default {
+                text: "It is not true.",
+                span: (metadata $condition).span,
+            })
+        }
+    }
+}
 
 alias log-timer = ./target/debug/log-timer
 
@@ -10,6 +28,7 @@ let functions = [
     [start-stop-label, {
         log-timer start test
         log-timer stop
+        log-timer get logs
         assert (log-timer get logs | str contains test)
         }
     ],
@@ -35,19 +54,20 @@ let functions = [
 
 def run_tests [functions, passed, total] -> int {
     mut passed = $passed
-    for pair in ($functions | enumerate) {
-        let text = $"[($pair.index + 1) / ($total)] ($pair.item.name): "
 
-        print $"(ansi yellow)($text)running(ansi reset)"
-        do --ignore-program-errors $pair.item.func
-        if $env.LAST_EXIT_CODE == 0 {
-            print $"(ansi green)($text)success(ansi reset)"
+    for pair in ($functions | enumerate) {
+        let text = $"(ansi reset) [($pair.index + 1) / ($total)] ($pair.item.name)"
+
+        print $"(ansi yellow)running($text)" --no-newline
+        try { 
+            do $pair.item.func out+err> /tmp/log-timer-test-output # FIXME: this is a workaround for redirecting output to a variable, not performant
+            print $"\r(ansi green)success($text)"
             $passed += 1
-        } else {
-            print $"(ansi red)($text)failed(ansi reset)"
+        } catch {
+            print $"\r(ansi red)failure($text)"
+            print (open /tmp/log-timer-test-output)
+            print $in.rendered
         }
-    
-        print ""
     }
     return $passed
 }
@@ -61,9 +81,9 @@ def main [password] {
     let total = $functions | length
     mut passed = 0
 
-    print $"running ($total) tests:\n"
+    print $"running ($total) tests:"
     $passed = (run_tests $functions $passed $total)
     
     let color = if $passed == $total {ansi green} else {ansi red}
-    print $"($color)testing done: ($passed) of ($total) passed(ansi reset)"
+    print $"testing done: ($color)($passed) of ($total)(ansi reset) passed"
 }
