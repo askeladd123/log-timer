@@ -1,6 +1,7 @@
 // TODO: support white space separated values
 // TODO: consider removing csv column `duration` as it can be derived from `datetime-start` and `datetime-stop`
 // TODO: change config file format to 'toml'
+// TODO: add version to config file to ensure compatibility
 // TODO: add options 'get --first' and 'get --last' for filtering
 // TODO: add reflexive row formatter that loads correct format
 // TODO: change from DateTime<Local> to DateTime<FixedOffset> to support time zones
