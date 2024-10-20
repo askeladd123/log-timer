@@ -59,8 +59,11 @@ pub enum ConfigCommands {
         row_formatter: Option<RowFormatter>,
     },
 
-    #[command(about = "Reset configuration to default.")]
-    SetDefault,
+    #[command(about = "Reset configuration to default, must be confirmed.")]
+    SetDefault {
+        #[arg(long, help = "Skips prompt and automatically confirms.")]
+        confirm: bool,
+    },
 
     #[command(about = "Print the configuration options currently in use.")]
     Get,

@@ -21,6 +21,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::error::Error;
 use std::fmt::{Debug, Display};
+use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::process::exit;
 use std::{fs, io};
@@ -253,7 +254,26 @@ fn main() -> Result<(), Box<dyn Error>> {
                 //     exit(1)
                 // };
             }
-            ConfigCommands::SetDefault => {
+            ConfigCommands::SetDefault { confirm } => {
+                if !confirm {
+                    println!("Do you want to reset configuration? (y/n): ");
+
+                    let mut input = String::new();
+                    io::stdout().flush();
+                    io::stdin().read_line(&mut input).unwrap();
+
+                    match input.to_lowercase().trim() {
+                        "yes" | "y" => {}
+                        "no" | "n" => {
+                            println!("Operation cancelled.");
+                            exit(0);
+                        }
+                        _ => {
+                            eprintln!("Unrecognized input. ");
+                            exit(1);
+                        }
+                    }
+                }
                 Config::default().save(&config_file_path);
                 println!("Configuration options reset.");
             }
