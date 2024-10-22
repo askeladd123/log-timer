@@ -64,6 +64,11 @@ struct Config {
     row_formatter: RowFormatter,
 }
 
+#[derive(Serialize, Deserialize, Debug)]
+struct ConfigVersion {
+    version: String,
+}
+
 enum ConfigError {
     ConfigNotFound,
     LogFileNotFound { path_tried: PathBuf, config: Config },
@@ -77,6 +82,8 @@ impl Config {
             return Err(ConfigError::ConfigNotFound);
         };
 
+        let config_version: ConfigVersion =
+            serde_json::from_str(&data).expect("Could not find 'version' ");
         let config: Self = serde_json::from_str(&data).unwrap();
 
         if config.log_file_path.exists() {
@@ -129,6 +136,8 @@ fn parse_time(time_str: &str) -> Result<DateTime<Local>, chrono::format::ParseEr
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
+    dbg!(clap::crate_version!());
+
     let warning = "warning".yellow();
 
     let cli = Cli::parse();
