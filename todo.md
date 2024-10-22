@@ -7,4 +7,3 @@ A list of bugs, features or other changes **todo** in the future:
 - change from DateTime<Local> to DateTime<FixedOffset> to support time zones
 - `log-timer get total` should have a flag where you can get HH:MM instead of just minutes
 - add warning when log is empty
-- move tests into own folder

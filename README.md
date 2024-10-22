@@ -45,4 +45,4 @@ docker build . --tag log-timer
 docker run log-timer
 ```
 
-> `test.nu` can be run with the *nushell interpreter* but this will mess around with the config and log file
+> not recommended to run `tests/run.nu` manually because this will mess around with the config and log file
