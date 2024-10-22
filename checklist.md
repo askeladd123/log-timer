@@ -25,3 +25,4 @@ Versions are stated both in `Cargo.toml` -> `package.version` and in *git tags*,
 - major: breaking api changes
 - minor: backwards compatible changes
 - patch: bug fix or small improvement
+- no bump: commits that only affect development
