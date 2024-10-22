@@ -7,3 +7,8 @@ A list of bugs, features or other changes **todo** in the future:
 - change from DateTime<Local> to DateTime<FixedOffset> to support time zones
 - `log-timer get total` should have a flag where you can get HH:MM instead of just minutes
 - add warning when log is empty
+- readme: tips on how to view data: `column`, nushell and plotting
+- no subcommands: inform about duration
+  - example: "Currently timing activity 'skole-diskret-matte', started 30 minutes ago at 13:07."
+- can program name be just "log"?
+- handle broken config file: delete prompt maybe?
