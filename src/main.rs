@@ -22,7 +22,7 @@ pub mod cli;
 pub mod row;
 
 /// folder name of config and data dirs
-const DIR_NAME: &str = "log-timer";
+const DIR_NAME: &str = "log";
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Activity {

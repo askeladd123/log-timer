@@ -7,7 +7,7 @@ use std::{fmt::Display, path::PathBuf};
 #[derive(Parser)]
 #[command(
     about = "A tool that helps you track time when you work (or play).",
-    long_about = "This tool helps you keep track of time. Example usage: \n- 'log-timer start washing-dishes'\n- 'log-timer stop' when you're done.\nThe program will add an entry with the time you washed dishes to a log file. See 'log-timer config set --help' for initial setup of the log file.",
+    long_about = "This tool helps you keep track of time. Example usage: \n- 'log start washing-dishes'\n- 'log stop' when you're done.\nThe program will add an entry with the time you washed dishes to a log file. See 'log config set --help' for initial setup of the log file.",
     version
 )]
 

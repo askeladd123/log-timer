@@ -15,11 +15,11 @@ RUN mkdir src && echo "// dummy file" > src/lib.rs && cargo build && rm src/lib.
 
 COPY src src/
 RUN cargo build && \
-    cp target/debug/log-timer .
+    cp target/debug/log .
 
 FROM archlinux:latest
 RUN useradd -m tester && echo 'tester ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers
-COPY --from=builder /app/log-timer /app/nu /bin/
+COPY --from=builder /app/log /app/nu /bin/
 USER tester
 WORKDIR /home/tester
 ENV HOME /home/tester
