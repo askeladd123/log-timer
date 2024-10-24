@@ -1,13 +1,13 @@
 # log timer
-A command line program I made to improve my workflow. Below is the output of `log-timer help`:
+A command line program I made to improve my workflow. Below is the output of `log help`:
 
 ```
 This tool helps you keep track of time. Example usage: 
-- 'log-timer start washing-dishes'
-- 'log-timer stop' when you're done.
-The program will add an entry with the time you washed dishes to a log file. See 'log-timer config set --help' for initial setup of the log file.
+- 'log start washing-dishes'
+- 'log stop' when you're done.
+The program will add an entry with the time you washed dishes to a log file. See 'log config set --help' for initial setup of the log file.
 
-Usage: log-timer [COMMAND]
+Usage: log [COMMAND]
 
 Commands:
   start   Begin timing an activity now.
@@ -26,8 +26,8 @@ Options:
 ```
 
 # build and run from source
-- `git clone git@github.com:askeladd123/log-timer.git`
-- `cd log-timer`
+- `git clone git@github.com:askeladd123/log.git`
+- `cd log`
 - `cargo run -- help`, `cargo run -- start washing-dishes` or any other available command
 
 The binary can be found in `target/debug/`.
@@ -41,8 +41,8 @@ To make it easier to run, add the binary to the `PATH` environment variable, or 
 # test
 You can run the integration test script `test.nu` with 
 ```
-docker build . --tag log-timer
-docker run log-timer
+docker build . --tag log
+docker run log
 ```
 
 > not recommended to run `tests/run.nu` manually because this will mess around with the config and log file

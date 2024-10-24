@@ -1,7 +1,7 @@
 # WARNING: uses nushell on commit e735bd475f53b62e30a3e4a041e21462db63ac47
 # this is because it uses $err.rendered from `try catch`
 
-# this script has integration tests for 'log-timer' cli
+# this script has integration tests for 'log' cli
 
 # TODO: find out why std assert does not work
 
@@ -29,12 +29,12 @@ def run_tests [functions, passed, total] -> int {
 
         print $"(ansi yellow)running($text)" --no-newline
         try { 
-            do $pair.item.func out+err> /tmp/log-timer-test-output # FIXME: this is a workaround for redirecting output to a variable, not performant
+            do $pair.item.func out+err> /tmp/log-test-output # FIXME: this is a workaround for redirecting output to a variable, not performant
             print $"\r(ansi green)success($text)"
             $passed += 1
         } catch {
             print $"\r(ansi red)failure($text)"
-            print (open /tmp/log-timer-test-output)
+            print (open /tmp/log-test-output)
             print $in.rendered
         }
     }

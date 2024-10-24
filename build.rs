@@ -11,7 +11,7 @@ fn main() -> Result<(), Error> {
 
     let mut cmd = Cli::command();
     for shell in Shell::value_variants() {
-        generate_to(*shell, &mut cmd, "log-timer", &completions_dir)
+        generate_to(*shell, &mut cmd, "log", &completions_dir)
             .expect("Failed to generate completion script");
     }
 
