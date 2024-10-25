@@ -354,7 +354,7 @@ fn main() -> Result<(), Box<dyn Error>> {
                     "{warning}: There is already an activity being timed. Won't start another one."
                 )
             }
-            (.., Commands::Get(GetArgs { command })) => {
+            (.., Commands::Get(GetArgs { command, .. })) => {
                 let mut reader_csv = csv::ReaderBuilder::new()
                     .flexible(false)
                     .has_headers(true)
@@ -371,25 +371,25 @@ fn main() -> Result<(), Box<dyn Error>> {
                         }
                         writer_csv.flush()?;
                     }
-                    GetCommands::Today => {
-                        match config.row_formatter {
-                            RowFormatter::V2_1 | RowFormatter::V2_0 => {}
-                            _ => unimplemented!(),
-                        };
+                    // GetCommands::Today => {
+                    //     match config.row_formatter {
+                    //         RowFormatter::V2_1 | RowFormatter::V2_0 => {}
+                    //         _ => unimplemented!(),
+                    //     };
 
-                        writer_csv.write_record(reader_csv.headers()?);
-                        for result in reader_csv.records() {
-                            let result = result?;
-                            let RowOutput { start, stop, .. } =
-                                config.row_formatter.read_row(&result);
+                    //     writer_csv.write_record(reader_csv.headers()?);
+                    //     for result in reader_csv.records() {
+                    //         let result = result?;
+                    //         let RowOutput { start, stop, .. } =
+                    //             config.row_formatter.read_row(&result);
 
-                            if [start.date_naive(), stop.date_naive()]
-                                .contains(&Local::now().date_naive())
-                            {
-                                writer_csv.write_byte_record(result.as_byte_record());
-                            }
-                        }
-                    }
+                    //         if [start.date_naive(), stop.date_naive()]
+                    //             .contains(&Local::now().date_naive())
+                    //         {
+                    //             writer_csv.write_byte_record(result.as_byte_record());
+                    //         }
+                    //     }
+                    // }
                     GetCommands::Total => {
                         match config.row_formatter {
                             RowFormatter::V2_1 => {}

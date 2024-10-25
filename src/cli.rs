@@ -82,24 +82,23 @@ pub enum ConfigCommands {
 pub struct GetArgs {
     #[command(subcommand)]
     pub command: GetCommands,
+
+    #[arg(short, long, help = "Don't include logs before this date.")]
+    first: Option<String>,
+
+    #[arg(short, long, help = "Don't include logs after this date.")]
+    last: Option<String>,
 }
 
 #[derive(Debug, Subcommand, Copy, Clone)]
 pub enum GetCommands {
-    #[command(
-        about = "Get a sanitized version of the log file. Essentially without comments. Format: csv"
-    )]
+    #[command(about = "Get the logs, with additional columns. Format: csv")]
     Logs,
 
-    #[command(
-        about = "Like the command 'logs' but if one day has multiple activities, summarize them. Format: csv"
-    )]
+    #[command(about = "Get information about each logged day. Format: json")]
     Days,
 
-    #[command(about = "Get stats for today session. Format: ?")]
-    Today,
-
-    #[command(about = "Get stats from all sessions. Format: ?")]
+    #[command(about = "Get stats from all sessions. Format: ?")] // TODO: decide format
     Total,
 }
 
