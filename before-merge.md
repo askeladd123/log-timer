@@ -1,0 +1,7 @@
+- create a python script that plots summary of all activities
+- create a python script that plots logs for each day
+- add dependency checks that inform users about requisites
+- make subcommands that return scripts
+- make `--plot` convenience flag for `get` commands
+  - it's simpler to do `log get total --plot` than `log get total | (log script plot-total | python)`
+  - also easier to understand
