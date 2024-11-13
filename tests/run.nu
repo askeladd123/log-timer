@@ -1,6 +1,3 @@
-# WARNING: uses nushell on commit e735bd475f53b62e30a3e4a041e21462db63ac47
-# this is because it uses $err.rendered from `try catch`
-
 # this script has integration tests for 'log' cli
 
 # TODO: find out why std assert does not work
