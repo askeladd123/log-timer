@@ -84,10 +84,10 @@ pub struct GetArgs {
     pub command: GetCommands,
 
     #[arg(short, long, help = "Don't include logs before this date.")]
-    first: Option<String>,
+    pub first: Option<String>,
 
     #[arg(short, long, help = "Don't include logs after this date.")]
-    last: Option<String>,
+    pub last: Option<String>,
 }
 
 #[derive(Debug, Subcommand, Copy, Clone)]

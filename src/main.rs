@@ -1,6 +1,6 @@
 #![allow(unused)]
 use chrono::{
-    DateTime, FixedOffset, Local, NaiveDate, NaiveDateTime, NaiveTime, RoundingError,
+    DateTime, Duration, FixedOffset, Local, NaiveDate, NaiveDateTime, NaiveTime, RoundingError,
     SecondsFormat, Utc,
 };
 use clap::Parser;
@@ -8,10 +8,11 @@ use cli::RowFormatter;
 use cli::{Cli, Commands, ConfigCommands, GetArgs, GetCommands};
 use colored::*;
 use csv::Writer;
+use humantime::{parse_duration, parse_rfc3339_weak};
 use row::RowOutput;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::error::Error;
+use std::error::{self, Error};
 use std::fmt::{Debug, Display};
 use std::io::Write;
 use std::path::{Path, PathBuf};
@@ -126,6 +127,33 @@ fn parse_time(time_str: &str) -> Result<DateTime<Local>, chrono::format::ParseEr
         .and_local_timezone(Local::now().timezone())
         .unwrap();
     Ok(datetime)
+}
+
+fn parse_human(date_str: &str) -> Result<chrono::DateTime<Utc>, Box<dyn error::Error>> {
+    let now = Utc::now();
+
+    match date_str.to_lowercase().as_str() {
+        "today" => Ok(now),
+        "yesterday" => Ok(now - Duration::days(1)),
+        _ if date_str.ends_with("ago") => {
+            let trimmed = date_str.trim_end_matches("ago");
+            Ok(now - chrono::Duration::from_std(parse_duration(trimmed)?).unwrap())
+        }
+        _ => {
+            if let Ok(date_time) = NaiveDateTime::parse_from_str(date_str, "%Y-%m-%d %H:%M") {
+                Ok(chrono::DateTime::<Utc>::from_naive_utc_and_offset(
+                    date_time, Utc,
+                ))
+            } else {
+                Ok(chrono::DateTime::<Utc>::from_naive_utc_and_offset(
+                    NaiveDate::parse_from_str(date_str, "%Y-%m-%d")?
+                        .and_hms_opt(0, 0, 0)
+                        .unwrap(),
+                    Utc,
+                ))
+            }
+        }
+    }
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
@@ -354,7 +382,16 @@ fn main() -> Result<(), Box<dyn Error>> {
                     "{warning}: There is already an activity being timed. Won't start another one."
                 )
             }
-            (.., Commands::Get(GetArgs { command, .. })) => {
+            (
+                ..,
+                Commands::Get(GetArgs {
+                    command,
+                    first,
+                    last,
+                }),
+            ) => {
+                let first = first.and_then(|v| parse_human(&v).ok());
+                let last = last.and_then(|v| parse_human(&v).ok());
                 let mut reader_csv = csv::ReaderBuilder::new()
                     .flexible(false)
                     .has_headers(true)
