@@ -5,7 +5,7 @@ Usefult when adding a new feature.
 - consider creating a file called `before-merge.md`
   - this states when the branch is ready to merge
 
-# merging
+# add
 - read through `todo.md`; you may have done some of them
 - read commented code: consider removing it
 - read `before-merge.md`; delete when done
@@ -14,15 +14,27 @@ Usefult when adding a new feature.
 - tests: consider making tests for new feature or bug
 - run tests
 - run linter: `cargo clippy`
+
+# commit
+- commit message: prepend with **version impact**: `maj`, `min`, `pat` and `dev` see [[#bump version]]
+  - example: `git commit --message 'maj: renamed command'`
 - read `git log`: squash WIP commits with for example "fix me"
 - `git rebase main`
-- bump version, see [below](#bump-version)
+- run tests again
+- version bump? see [below](#bump-version)
   - update `Cargo.toml`
-  - add tag
+  - make bump commit
 
 # bump version
-Versions are stated both in `Cargo.toml` -> `package.version` and in *git tags*, which must be updated to reflect each other. Use major-minor-patch system like `v0.3.1`:
-- major: breaking api changes
-- minor: backwards compatible changes
-- patch: bug fix or small improvement
-- no bump: commits that only affect development
+Since there's no releases anywhere yet, there is no rush to bump versions. Do it when you feel like it. 
+
+> git tags for versioning becomes superfluous when using bump commit with version, example: `bump: v0.1.2` 
+
+## version impact
+Prefix commits with following labels. These will be used later to create a version number using `major.minor.patch`, example: `v1.2.3`.
+- `maj`, major: breaking api changes
+- `min`, minor: backwards compatible changes
+- `pat`, patch: bug fix or small improvement
+- `dev`, no bump: commits that only affect development
+
+When you feel like it's time, update `Cargo.toml` -> `package.version` and create a commit called `bump: vX.X.X` but replace `X` with version numbers. Include a *changelog* or summary of changes since last bump, grouped by **version impact**. 
