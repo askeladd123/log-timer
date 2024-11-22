@@ -1,6 +1,7 @@
 A list of bugs, features or other changes **todo** in the future:
 - support white space separated values
 - consider removing csv column `duration` as it can be derived from `datetime-start` and `datetime-stop`
+  - replace *row format* with just: `time format` = `standard` | `readable`
 - change config file format to 'toml'
 - add version to config file to ensure compatibility
 - add options 'get --first' and 'get --last' for filtering
@@ -11,3 +12,4 @@ A list of bugs, features or other changes **todo** in the future:
 - no subcommands: inform about duration
   - example: "Currently timing activity 'skole-diskret-matte', started 30 minutes ago at 13:07."
 - handle broken config file: delete prompt maybe?
+- add test for `--time` flag
