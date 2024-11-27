@@ -31,4 +31,8 @@
         let default = log config get-default | from json
         assert ($current == $default)
     }],
+    [first-last, {
+        log start --time 
+        
+    }],
 ]

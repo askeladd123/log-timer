@@ -11,3 +11,4 @@ A list of bugs, features or other changes **todo** in the future:
 - no subcommands: inform about duration
   - example: "Currently timing activity 'skole-diskret-matte', started 30 minutes ago at 13:07."
 - handle broken config file: delete prompt maybe?
+- add support for human format with `--time` flag: example "10min ago"
