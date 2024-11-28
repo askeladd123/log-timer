@@ -13,3 +13,6 @@ A list of bugs, features or other changes **todo** in the future:
   - example: "Currently timing activity 'skole-diskret-matte', started 30 minutes ago at 13:07."
 - handle broken config file: delete prompt maybe?
 - add test for `--time` flag
+- investigate bug: too many minutes
+  - `log get total` gives me *2days 20hr 9 min* (4089min) of `skole-diskret-2`
+  - counting gives me *20hr 8min* (1208min)
