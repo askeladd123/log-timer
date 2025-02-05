@@ -16,4 +16,29 @@ A list of bugs, features or other changes **todo** in the future:
 - investigate bug: too many minutes
   - `log get total` gives me *2days 20hr 9 min* (4089min) of `skole-diskret-2`
   - counting gives me *20hr 8min* (1208min)
-- add `Cargo.lock` to git; before bump
+- nix build: wait for [bugfix](./todo.md#nix-flakes-src)
+- nix: provide module
+- nix: replace docker tests with nix
+
+# nix flakes src
+Nix flakes by default uses the whole git tree to detect changes. This means updates to `README.md` or this file requires a rebuild. When using a non-flake build, one could use `nix-gitignore.gitignoreSource` [1], but flakes apparently has a bug makes this useless [2].
+
+Working non-flake `default.nix`:
+```nix
+{pkgs ? import <nixpkgs> {}}:
+pkgs.rustPlatform.buildRustPackage {
+  pname = "log-timer";
+  version = "0.0.0";
+  src =
+    pkgs.nix-gitignore.gitignoreSource ''
+      /*.md
+      /tests/
+    ''
+    ./.;
+  cargoLock.lockFile = ./Cargo.lock;
+}
+```
+
+# links
+[1]: https://nixos.org/manual/nixpkgs/stable/#sec-pkgs-nix-gitignore
+[2]: https://github.com/NixOS/nix/issues/5549 "flake docs don't explain that local flakes are copied to the nix store before evaluation"

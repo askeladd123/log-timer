@@ -35,6 +35,12 @@ The binary can be found in `target/debug/`.
 ## requirements
 You will need *git*, and *the rust toolchain* to compile.
 
+## nix
+
+> TODO: write instructions for nix, but in short:
+> - run `nix develop --command cargo run` to program
+> - or `nix build` to build derivation
+
 # run from anywhere
 To make it easier to run, add the binary to the `PATH` environment variable, or make a *shell alias*.
 

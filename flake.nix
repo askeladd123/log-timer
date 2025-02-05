@@ -6,10 +6,14 @@
     self,
     nixpkgs-stable,
   }: let
-    stable = nixpkgs-stable.legacyPackages.x86_64-linux;
+    system = "x86_64-linux";
+    stable = nixpkgs-stable.legacyPackages.${system};
   in {
-    devShells.x86_64-linux.default = stable.mkShell {
-      packages = with stable; [cargo rustc];
+    packages.${system}.default = stable.rustPlatform.buildRustPackage {
+      pname = "log-timer";
+      version = "0.3.2";
+      src = ./.;
+      cargoLock.lockFile = ./Cargo.lock;
     };
   };
 }
