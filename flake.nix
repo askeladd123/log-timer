@@ -15,5 +15,9 @@
       src = ./.;
       cargoLock.lockFile = ./Cargo.lock;
     };
+    apps.${system}.default = {
+      type = "app";
+      program = "${self.packages.${system}.default}/bin/log";
+    };
   };
 }
