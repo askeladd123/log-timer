@@ -19,6 +19,7 @@ A list of bugs, features or other changes **todo** in the future:
 - nix build: wait for [bugfix](./todo.md#nix-flakes-src)
 - nix: provide module
 - nix: replace docker tests with nix
+- consider using list of tags instead of labels
 
 # nix flakes src
 Nix flakes by default uses the whole git tree to detect changes. This means updates to `README.md` or this file requires a rebuild. When using a non-flake build, one could use `nix-gitignore.gitignoreSource` [1], but flakes apparently has a bug makes this useless [2].
